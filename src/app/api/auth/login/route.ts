@@ -3,22 +3,17 @@ import type { LoginResponse } from "@/lib/types/api/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
-import { z } from "zod";
-
-const loginSchema = z.object({
-  email: z.email(),
-  password: z.string(),
-});
+import { loginSchema } from "@/lib/schemas/login-schema";
 
 export const POST = async (request: NextRequest): LoginResponse => {
   try {
     const body = await request.json();
-    const result = loginSchema.safeParse(body);
-    if (!result.success) return NextResponse.json({ error: result.error.message }, { status: 400 });
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     const existingUser = await prisma.administrator.findUnique({
-      where: { email: result.data.email },
+      where: { email: parsed.data.email },
     });
-    if (!existingUser || existingUser.password !== result.data.password) {
+    if (!existingUser || existingUser.password !== parsed.data.password) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
     await createSession(existingUser.id);

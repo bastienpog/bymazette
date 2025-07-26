@@ -5,6 +5,7 @@ import type { UpdateProductResponse } from "@/lib/types/api/product";
 import type { DeleteProductResponse } from "@/lib/types/api/product";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { updateProductSchema } from "@/lib/schemas/product-schema";
 
 export const GET = async (_request: NextRequest, { params }: Params): GetProductByIdResponse => {
   const { id } = await params;
@@ -22,9 +23,11 @@ export const UPDATE = async (request: NextRequest, { params }: Params): UpdatePr
   const { id } = await params;
   try {
     const body = await request.json();
+    const parsed = updateProductSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     const existingProduct = await prisma.product.findUnique({ where: { id } });
     if (!existingProduct) return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    const product = await prisma.product.update({ where: { id }, data: body });
+    const product = await prisma.product.update({ where: { id }, data: parsed.data });
     return NextResponse.json({ product }, { status: 200 });
   } catch (error) {
     console.error(`Error @ UPDATE /api/product/${id} - ${error}`);
