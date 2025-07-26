@@ -3,8 +3,8 @@
 import type { ActionResult } from "@/lib/types/actions/action-result";
 
 export const loginAction = async (_prevState: unknown, formData: FormData): ActionResult => {
-  const email = formData.get("email");
-  const password = formData.get("password");
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
   try {
     const response = await fetch("http://localhost:3000/api/auth/login", {
       method: "POST",
